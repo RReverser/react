@@ -18,8 +18,11 @@
 
 "use strict";
 
+module.exports = traverseAllChildren;
+
 var ReactInstanceHandles = require('ReactInstanceHandles');
 var ReactTextComponent = require('ReactTextComponent');
+var ReactDOMWrapper = require('ReactDOMWrapper');
 
 var invariant = require('invariant');
 
@@ -132,24 +135,25 @@ var traverseAllChildrenImpl =
         subtreeCount = 1;
       } else {
         if (type === 'object') {
-          invariant(
-            !children || children.nodeType !== 1,
-            'traverseAllChildren(...): Encountered an invalid child; DOM ' +
-            'elements are not valid children of React components.'
-          );
-          for (var key in children) {
-            if (children.hasOwnProperty(key)) {
-              subtreeCount += traverseAllChildrenImpl(
-                children[key],
-                (
-                  nameSoFar + (nameSoFar ? SUBSEPARATOR : SEPARATOR) +
-                  wrapUserProvidedKey(key) + SUBSEPARATOR +
-                  getComponentKey(children[key], 0)
-                ),
-                indexSoFar + subtreeCount,
-                callback,
-                traverseContext
-              );
+          if (children.nodeType === 1) {
+            var normalizedNode = ReactDOMWrapper(null, children);
+            callback(traverseContext, normalizedNode, storageName, indexSoFar);
+            subtreeCount += 1;
+          } else {
+            for (var key in children) {
+              if (children.hasOwnProperty(key)) {
+                subtreeCount += traverseAllChildrenImpl(
+                  children[key],
+                  (
+                    nameSoFar + (nameSoFar ? SUBSEPARATOR : SEPARATOR) +
+                    wrapUserProvidedKey(key) + SUBSEPARATOR +
+                    getComponentKey(children[key], 0)
+                  ),
+                  indexSoFar + subtreeCount,
+                  callback,
+                  traverseContext
+                );
+              }
             }
           }
         } else if (type === 'string') {
@@ -189,5 +193,3 @@ function traverseAllChildren(children, callback, traverseContext) {
 
   return traverseAllChildrenImpl(children, '', 0, callback, traverseContext);
 }
-
-module.exports = traverseAllChildren;
