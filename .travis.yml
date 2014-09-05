@@ -9,9 +9,7 @@ before_install:
 - |
     if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
       PR_FIRST=$(curl -s https://github.com/${TRAVIS_REPO_SLUG}/pull/${TRAVIS_PULL_REQUEST}.patch | head -1 | grep -o -E '\b[0-9a-f]{40}\b' | tr -d '\n')
-      DIFF_RANGE=${PR_FIRST}^..${TRAVIS_COMMIT}
-    else
-      DIFF_RANGE=${TRAVIS_COMMIT_RANGE/../^..}
+      DIFF_RANGE=${PR_FIRST}..${TRAVIS_COMMIT}
     fi
     echo $DIFF_RANGE
     git diff --name-only $DIFF_RANGE | grep -qvE '(\.md$)|(^(docs|examples))/' || {
